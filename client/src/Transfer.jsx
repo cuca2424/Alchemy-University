@@ -1,5 +1,7 @@
 import { useState } from "react";
 import server from "./server";
+import { signMessage } from "../../server/scripts/signMessage";
+import { verifySignature } from "../../server/scripts/verifySignature";
 
 function Transfer({ address, setBalance }) {
   const [sendAmount, setSendAmount] = useState("");
@@ -9,22 +11,29 @@ function Transfer({ address, setBalance }) {
 
   async function transfer(evt) {
     evt.preventDefault();
-
-    try {
-      const {
-        data: { balance },
-      } = await server.post(`send`, {
-        sender: address,
-        amount: parseInt(sendAmount),
-        recipient,
-      });
-      setBalance(balance);
-    } catch (ex) {
-      alert(ex.response.data.message);
+    const userInput = prompt("Sing this transaction with your Private Key:")
+    const userSignature = signMessage(userInput)
+    if (verifySignature(userSignature, address)){
+        console.log("if")
+        try {
+          const {
+            data: { balance },
+          } = await server.post(`send`, {
+            sender: address,
+            amount: parseInt(sendAmount),
+            recipient,
+          });
+          setBalance(balance);
+        } catch (ex) {
+          alert(ex.response.data.message);
+        }
+    } else {
+      console.log("else")
+      alert("Not the owner")
     }
-  }
-
-  return (
+  } 
+    
+    return (
     <form className="container transfer" onSubmit={transfer}>
       <h1>Send Transaction</h1>
 
